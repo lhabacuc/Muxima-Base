@@ -16,9 +16,7 @@ FeedForward::FeedForward(
 
 Tensor	FeedForward::forward(const Tensor& input)
 {
-	Tensor	hidden;
-	Tensor	output;
-
+	(void)_hidden_dim;
 	if (input.shape().size() != 2)
 		throw (std::invalid_argument(
 			"FeedForward expects 2D tensor"));
@@ -27,9 +25,10 @@ Tensor	FeedForward::forward(const Tensor& input)
 		throw (std::invalid_argument(
 			"Invalid embedding dimension"));
 
-	hidden = _up.forward(input);
+	Tensor	hidden = _up.forward(input);
+
 	hidden = gelu(hidden);
-	output = _down.forward(hidden);
+	Tensor	output = _down.forward(hidden);
 
 	return (output);
 }

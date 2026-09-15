@@ -1,4 +1,4 @@
-#include "../src/nn/feed_forward.h"
+#include "../src/transformer/transformer_block.h"
 
 #include <iostream>
 #include <vector>
@@ -12,14 +12,15 @@ int	main()
 
 	{
 		Tensor	input(shape);
-		FeedForward	ffn(4, 16);
+		Tensor	result;
+		TransformerBlock	block(4, 2, 16);
 
 		input.data()[0] = 1.0f;
 		input.data()[1] = 2.0f;
 		input.data()[2] = 3.0f;
 		input.data()[3] = 4.0f;
 
-		Tensor	result = ffn.forward(input);
+		result = block.forward(input);
 
 		if (result.shape()[0] != 3)
 			return (1);
@@ -28,7 +29,7 @@ int	main()
 			return (1);
 	}
 
-	std::cout << "test_feed_forward: OK"
+	std::cout << "test_transformer_block: OK"
 		<< std::endl;
 	return (0);
 }
