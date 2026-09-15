@@ -43,7 +43,7 @@ Linear::Linear(size_t input_size, size_t output_size)
 
 Tensor	Linear::forward(const Tensor& input)
 {
-	return (matmul(input, _weights));
+	return (add(matmul(input, _weights), _bias));
 }
 
 Tensor&	Linear::weights()

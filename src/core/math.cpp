@@ -3,18 +3,49 @@
 #include <cmath>
 #include <stdexcept>
 
+static bool	can_broadcast_bias(const Tensor& a, const Tensor& b)
+{
+	if (a.shape().size() != 2 || b.shape().size() != 2)
+		return (false);
+	if (b.shape()[0] != 1)
+		return (false);
+	if (a.shape()[1] != b.shape()[1])
+		return (false);
+	return (true);
+}
+
 Tensor	add(const Tensor& a, const Tensor& b)
 {
 	Tensor	result(a.shape());
 	size_t	i;
+	size_t	j;
+	size_t	columns;
 
-	if (a.shape() != b.shape())
-		throw (std::invalid_argument("Tensor shapes must match"));
-
-	i = 0;
-	while (i < a.size())
+	if (a.shape() == b.shape())
 	{
-		result.data()[i] = a.data()[i] + b.data()[i];
+		i = 0;
+		while (i < a.size())
+		{
+			result.data()[i] = a.data()[i] + b.data()[i];
+			i++;
+		}
+		return (result);
+	}
+
+	if (!can_broadcast_bias(a, b))
+		throw (std::invalid_argument("Incompatible tensor shapes"));
+
+	columns = a.shape()[1];
+	i = 0;
+	while (i < a.shape()[0])
+	{
+		j = 0;
+		while (j < columns)
+		{
+			result.data()[i * columns + j]
+				= a.data()[i * columns + j] + b.data()[j];
+			j++;
+		}
 		i++;
 	}
 	return (result);
@@ -265,4 +296,6 @@ Tensor	sqrt(const Tensor& tensor)
 	}
 	return (result);
 }
+
+
 

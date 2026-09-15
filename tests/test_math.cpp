@@ -292,6 +292,55 @@ static int	test_math_functions()
 	return (0);
 }
 
+static int	test_broadcast()
+{
+	std::vector<size_t> shape_a;
+	std::vector<size_t> shape_b;
+	Tensor	*a;
+	Tensor	*b;
+
+	shape_a.push_back(2);
+	shape_a.push_back(3);
+
+	shape_b.push_back(1);
+	shape_b.push_back(3);
+
+	a = new Tensor(shape_a);
+	b = new Tensor(shape_b);
+
+	a->data()[0] = 1.0f;
+	a->data()[1] = 2.0f;
+	a->data()[2] = 3.0f;
+	a->data()[3] = 4.0f;
+	a->data()[4] = 5.0f;
+	a->data()[5] = 6.0f;
+
+	b->data()[0] = 10.0f;
+	b->data()[1] = 20.0f;
+	b->data()[2] = 30.0f;
+
+	{
+		Tensor	result = add(*a, *b);
+
+		if (result.data()[0] != 11.0f)
+			return (1);
+		if (result.data()[1] != 22.0f)
+			return (1);
+		if (result.data()[2] != 33.0f)
+			return (1);
+		if (result.data()[3] != 14.0f)
+			return (1);
+		if (result.data()[4] != 25.0f)
+			return (1);
+		if (result.data()[5] != 36.0f)
+			return (1);
+	}
+
+	delete a;
+	delete b;
+	return (0);
+}
+
 int	main()
 {
 	if (test_operations() != 0)
@@ -342,6 +391,13 @@ int	main()
 		return (1);
 	}
 	std::cout << "test_math_functions: OK" << std::endl;
+	
+	if (test_broadcast() != 0)
+	{
+		std::cout << "test_broadcast: FAIL" << std::endl;
+		return (1);
+	}
+	std::cout << "test_broadcast: OK" << std::endl;
 	
 	return (0);
 }
