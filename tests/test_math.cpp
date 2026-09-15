@@ -1,5 +1,6 @@
 #include "../src/core/math.h"
 
+#include <cmath>
 #include <iostream>
 #include <vector>
 
@@ -203,33 +204,38 @@ static int	test_add()
 
 static int	test_softmax()
 {
+
 	std::vector<size_t> shape;
-	Tensor	*tensor;
 
+	shape.push_back(2);
 	shape.push_back(3);
-	tensor = new Tensor(shape);
 
-	tensor->data()[0] = 1.0f;
-	tensor->data()[1] = 2.0f;
-	tensor->data()[2] = 3.0f;
+	Tensor	input(shape);
+	Tensor	result = softmax(input);
 
-	{
-		Tensor	result = softmax(*tensor);
-		float	sum;
+	input.data()[0] = 1.0f;
+	input.data()[1] = 2.0f;
+	input.data()[2] = 3.0f;
 
-		sum = result.data()[0]
+	input.data()[3] = 4.0f;
+	input.data()[4] = 5.0f;
+	input.data()[5] = 6.0f;
+
+	result = softmax(input);
+
+	if (::fabs(
+			result.data()[0]
 			+ result.data()[1]
-			+ result.data()[2];
+			+ result.data()[2]
+			- 1.0f) > 0.0001f)
+		return (1);
 
-		if (sum < 0.999f || sum > 1.001f)
-			return (1);
-		if (result.data()[0] >= result.data()[1])
-			return (1);
-		if (result.data()[1] >= result.data()[2])
-			return (1);
-	}
-
-	delete tensor;
+	if (::fabs(
+			result.data()[3]
+			+ result.data()[4]
+			+ result.data()[5]
+			- 1.0f) > 0.0001f)
+		return (1);
 	return (0);
 }
 

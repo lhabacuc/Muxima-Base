@@ -93,32 +93,49 @@ static Tensor	create_softmax_result(const Tensor& tensor)
 Tensor	softmax(const Tensor& tensor)
 {
 	Tensor	result(create_softmax_result(tensor));
-	float	max_value;
-	float	sum;
+	size_t	rows;
+	size_t	columns;
 	size_t	i;
+	size_t	j;
+	float	max_value;
+	float	total;
 
-	max_value = tensor.data()[0];
-	i = 1;
-	while (i < tensor.size())
-	{
-		if (tensor.data()[i] > max_value)
-			max_value = tensor.data()[i];
-		i++;
-	}
+	if (tensor.shape().size() != 2)
+		throw (std::invalid_argument(
+			"softmax expects 2D tensor"));
 
-	sum = 0.0f;
-	i = 0;
-	while (i < tensor.size())
-	{
-		result.data()[i] = std::exp(tensor.data()[i] - max_value);
-		sum += result.data()[i];
-		i++;
-	}
+	rows = tensor.shape()[0];
+	columns = tensor.shape()[1];
 
 	i = 0;
-	while (i < tensor.size())
+	while (i < rows)
 	{
-		result.data()[i] /= sum;
+		max_value = tensor.data()[i * columns];
+		j = 1;
+		while (j < columns)
+		{
+			if (tensor.data()[i * columns + j] > max_value)
+				max_value = tensor.data()[i * columns + j];
+			j++;
+		}
+
+		total = 0.0f;
+		j = 0;
+		while (j < columns)
+		{
+			result.data()[i * columns + j]
+				= std::exp(
+					tensor.data()[i * columns + j] - max_value);
+			total += result.data()[i * columns + j];
+			j++;
+		}
+
+		j = 0;
+		while (j < columns)
+		{
+			result.data()[i * columns + j] /= total;
+			j++;
+		}
 		i++;
 	}
 	return (result);
