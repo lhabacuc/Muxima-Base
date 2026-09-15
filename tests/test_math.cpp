@@ -1,171 +1,151 @@
-#include "../src/core/tensor.h"
+#include "../src/core/math.h"
 
 #include <iostream>
 #include <vector>
-#include <stdexcept>
 
-static int	test_shape()
+static int	test_operations()
 {
 	std::vector<size_t> shape;
-	Tensor	*tensor;
+	Tensor	*a;
+	Tensor	*b;
+	Tensor	*result;
 
 	shape.push_back(2);
 	shape.push_back(3);
-	shape.push_back(4);
 
-	tensor = new Tensor(shape);
+	a = new Tensor(shape);
+	b = new Tensor(shape);
 
-	if (tensor->shape().size() != 3)
-	{
-		delete tensor;
-		return (1);
-	}
-	if (tensor->shape()[0] != 2)
-	{
-		delete tensor;
-		return (1);
-	}
-	if (tensor->shape()[1] != 3)
-	{
-		delete tensor;
-		return (1);
-	}
-	if (tensor->shape()[2] != 4)
-	{
-		delete tensor;
-		return (1);
-	}
-	if (tensor->size() != 24)
-	{
-		delete tensor;
-		return (1);
-	}
+	a->data()[0] = 1.0f;
+	a->data()[1] = 2.0f;
+	a->data()[2] = 3.0f;
+	a->data()[3] = 4.0f;
+	a->data()[4] = 5.0f;
+	a->data()[5] = 6.0f;
 
-	delete tensor;
+	b->data()[0] = 10.0f;
+	b->data()[1] = 20.0f;
+	b->data()[2] = 30.0f;
+	b->data()[3] = 40.0f;
+	b->data()[4] = 50.0f;
+	b->data()[5] = 60.0f;
+
+	result = new Tensor(add(*a, *b).shape());
+	*result = add(*a, *b);
+
+	if (result->data()[0] != 11.0f)
+		return (1);
+	if (result->data()[5] != 66.0f)
+		return (1);
+
+	*result = subtract(*b, *a);
+	if (result->data()[0] != 9.0f)
+		return (1);
+	if (result->data()[5] != 54.0f)
+		return (1);
+
+	*result = multiply(*a, *b);
+	if (result->data()[0] != 10.0f)
+		return (1);
+	if (result->data()[5] != 360.0f)
+		return (1);
+
+	*result = scalar_multiply(*a, 2.0f);
+	if (result->data()[0] != 2.0f)
+		return (1);
+	if (result->data()[5] != 12.0f)
+		return (1);
+
+	delete a;
+	delete b;
+	delete result;
 	return (0);
 }
 
-static int	test_access()
+static int	test_matmul()
 {
-	std::vector<size_t> shape;
-	std::vector<size_t> position;
-	Tensor	*tensor;
+	std::vector<size_t> shape_a;
+	std::vector<size_t> shape_b;
+	Tensor	*a;
+	Tensor	*b;
 
-	shape.push_back(2);
-	shape.push_back(3);
-	shape.push_back(4);
+	shape_a.push_back(2);
+	shape_a.push_back(3);
 
-	tensor = new Tensor(shape);
+	shape_b.push_back(3);
+	shape_b.push_back(2);
 
-	position.push_back(1);
-	position.push_back(2);
-	position.push_back(3);
+	a = new Tensor(shape_a);
+	b = new Tensor(shape_b);
 
-	tensor->at(position) = 42.0f;
+	a->data()[0] = 1.0f;
+	a->data()[1] = 2.0f;
+	a->data()[2] = 3.0f;
+	a->data()[3] = 4.0f;
+	a->data()[4] = 5.0f;
+	a->data()[5] = 6.0f;
 
-	if (tensor->at(position) != 42.0f)
+	b->data()[0] = 7.0f;
+	b->data()[1] = 8.0f;
+	b->data()[2] = 9.0f;
+	b->data()[3] = 10.0f;
+	b->data()[4] = 11.0f;
+	b->data()[5] = 12.0f;
+
 	{
-		delete tensor;
-		return (1);
+		Tensor	result = matmul(*a, *b);
+
+		if (result.shape()[0] != 2 || result.shape()[1] != 2)
+			return (1);
+		if (result.data()[0] != 58.0f)
+			return (1);
+		if (result.data()[1] != 64.0f)
+			return (1);
+		if (result.data()[2] != 139.0f)
+			return (1);
+		if (result.data()[3] != 154.0f)
+			return (1);
 	}
 
-	delete tensor;
+	delete a;
+	delete b;
 	return (0);
 }
 
-static int	test_invalid_position()
+static int	test_transpose()
 {
 	std::vector<size_t> shape;
-	std::vector<size_t> position;
 	Tensor	*tensor;
 
 	shape.push_back(2);
 	shape.push_back(3);
-	shape.push_back(4);
 
 	tensor = new Tensor(shape);
 
-	position.push_back(2);
-	position.push_back(0);
-	position.push_back(0);
+	tensor->data()[0] = 1.0f;
+	tensor->data()[1] = 2.0f;
+	tensor->data()[2] = 3.0f;
+	tensor->data()[3] = 4.0f;
+	tensor->data()[4] = 5.0f;
+	tensor->data()[5] = 6.0f;
 
-	try
 	{
-		tensor->at(position);
-		delete tensor;
-		return (1);
-	}
-	catch (const std::out_of_range&)
-	{
-		delete tensor;
-		return (0);
-	}
-}
+		Tensor	result = transpose(*tensor);
 
-static int	test_invalid_dimension()
-{
-	std::vector<size_t> shape;
-	Tensor	*tensor;
-
-	shape.push_back(2);
-	shape.push_back(0);
-	shape.push_back(4);
-
-	try
-	{
-		tensor = new Tensor(shape);
-		delete tensor;
-		return (1);
-	}
-	catch (const std::invalid_argument&)
-	{
-		return (0);
-	}
-}
-
-static int	test_reshape()
-{
-	std::vector<size_t> shape;
-	std::vector<size_t> new_shape;
-	std::vector<size_t> position;
-	Tensor	*tensor;
-
-	shape.push_back(2);
-	shape.push_back(3);
-	shape.push_back(4);
-
-	tensor = new Tensor(shape);
-
-	position.push_back(1);
-	position.push_back(2);
-	position.push_back(3);
-
-	tensor->at(position) = 42.0f;
-
-	new_shape.push_back(4);
-	new_shape.push_back(6);
-
-	tensor->reshape(new_shape);
-
-	if (tensor->shape().size() != 2)
-	{
-		delete tensor;
-		return (1);
-	}
-	if (tensor->shape()[0] != 4)
-	{
-		delete tensor;
-		return (1);
-	}
-	if (tensor->shape()[1] != 6)
-	{
-		delete tensor;
-		return (1);
-	}
-	if (tensor->size() != 24)
-	{
-		delete tensor;
-		return (1);
+		if (result.shape()[0] != 3 || result.shape()[1] != 2)
+			return (1);
+		if (result.data()[0] != 1.0f)
+			return (1);
+		if (result.data()[1] != 4.0f)
+			return (1);
+		if (result.data()[2] != 2.0f)
+			return (1);
+		if (result.data()[3] != 5.0f)
+			return (1);
+		if (result.data()[4] != 3.0f)
+			return (1);
+		if (result.data()[5] != 6.0f)
+			return (1);
 	}
 
 	delete tensor;
@@ -174,40 +154,24 @@ static int	test_reshape()
 
 int	main()
 {
-	if (test_shape() != 0)
+	if (test_operations() != 0)
 	{
-		std::cout << "test_shape: FAIL" << std::endl;
+		std::cout << "test_operations: FAIL" << std::endl;
 		return (1);
 	}
-	std::cout << "test_shape: OK" << std::endl;
-
-	if (test_access() != 0)
+	std::cout << "test_operations: OK" << std::endl;
+	if (test_matmul() != 0)
 	{
-		std::cout << "test_access: FAIL" << std::endl;
+		std::cout << "test_matmul: FAIL" << std::endl;
 		return (1);
 	}
-	std::cout << "test_access: OK" << std::endl;
-
-	if (test_invalid_position() != 0)
+	std::cout << "test_matmul: OK" << std::endl;
+	if (test_transpose() != 0)
 	{
-		std::cout << "test_invalid_position: FAIL" << std::endl;
+		std::cout << "test_transpose: FAIL" << std::endl;
 		return (1);
 	}
-	std::cout << "test_invalid_position: OK" << std::endl;
-
-	if (test_invalid_dimension() != 0)
-	{
-		std::cout << "test_invalid_dimension: FAIL" << std::endl;
-		return (1);
-	}
-	std::cout << "test_invalid_dimension: OK" << std::endl;
-
-	if (test_reshape() != 0)
-	{
-		std::cout << "test_reshape: FAIL" << std::endl;
-		return (1);
-	}
-	std::cout << "test_reshape: OK" << std::endl;
-
+	std::cout << "test_transpose: OK" << std::endl;
 	return (0);
 }
+
