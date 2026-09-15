@@ -2,6 +2,24 @@
 
 #include "../core/math.h"
 
+static Tensor	create_weights(size_t input_size, size_t output_size)
+{
+	std::vector<size_t> shape;
+
+	shape.push_back(input_size);
+	shape.push_back(output_size);
+	return (Tensor(shape));
+}
+
+static Tensor	create_bias(size_t output_size)
+{
+	std::vector<size_t> shape;
+
+	shape.push_back(1);
+	shape.push_back(output_size);
+	return (Tensor(shape));
+}
+
 Linear::Linear(size_t input_size, size_t output_size)
 	: _weights(create_weights(input_size, output_size)),
 	_bias(create_bias(output_size))
@@ -21,4 +39,19 @@ Linear::Linear(size_t input_size, size_t output_size)
 		_bias.data()[i] = 0.0f;
 		i++;
 	}
+}
+
+Tensor	Linear::forward(const Tensor& input)
+{
+	return (matmul(input, _weights));
+}
+
+Tensor&	Linear::weights()
+{
+	return (_weights);
+}
+
+Tensor&	Linear::bias()
+{
+	return (_bias);
 }
