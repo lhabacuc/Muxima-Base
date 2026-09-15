@@ -300,24 +300,28 @@ int	main()
 		return (1);
 	}
 	std::cout << "test_operations: OK" << std::endl;
+
 	if (test_matmul() != 0)
 	{
 		std::cout << "test_matmul: FAIL" << std::endl;
 		return (1);
 	}
 	std::cout << "test_matmul: OK" << std::endl;
+	
 	if (test_transpose() != 0)
 	{
 		std::cout << "test_transpose: FAIL" << std::endl;
 		return (1);
 	}
 	std::cout << "test_transpose: OK" << std::endl;
+	
 	if (test_add() != 0)
 	{
 		std::cout << "test_add: FAIL" << std::endl;
 		return (1);
 	}
 	std::cout << "test_add: OK" << std::endl;
+	
 	if (test_softmax() != 0)
 	{
 		std::cout << "test_softmax: FAIL" << std::endl;
@@ -338,6 +342,7 @@ int	main()
 		return (1);
 	}
 	std::cout << "test_math_functions: OK" << std::endl;
+	
 	return (0);
 }
 
