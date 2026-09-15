@@ -1,8 +1,9 @@
 #include "linear.h"
 
 #include "../core/math.h"
+#include "initialization.h"
 
-static Tensor	create_weights(size_t input_size, size_t output_size)
+Tensor	Linear::create_weights(size_t input_size, size_t output_size)
 {
 	std::vector<size_t> shape;
 
@@ -11,7 +12,7 @@ static Tensor	create_weights(size_t input_size, size_t output_size)
 	return (Tensor(shape));
 }
 
-static Tensor	create_bias(size_t output_size)
+Tensor	Linear::create_bias(size_t output_size)
 {
 	std::vector<size_t> shape;
 

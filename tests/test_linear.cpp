@@ -5,14 +5,13 @@
 
 int	main()
 {
-	std::vector<size_t> shape;
+	std::vector<size_t> input_shape;
 	Linear	layer(3, 2);
-	Tensor	input;
 
-	shape.push_back(1);
-	shape.push_back(3);
+	input_shape.push_back(1);
+	input_shape.push_back(3);
 
-	input = Tensor(shape);
+	Tensor	input(input_shape);
 
 	input.data()[0] = 1.0f;
 	input.data()[1] = 2.0f;
@@ -31,6 +30,10 @@ int	main()
 	{
 		Tensor	output = layer.forward(input);
 
+		if (output.shape()[0] != 1)
+			return (1);
+		if (output.shape()[1] != 2)
+			return (1);
 		if (output.data()[0] != 23.0f)
 			return (1);
 		if (output.data()[1] != 30.0f)
