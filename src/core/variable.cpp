@@ -7,6 +7,7 @@ Variable::Variable(
 	_gradient(value.shape()),
 	_requires_grad(requires_grad)
 {
+	zero_grad();
 }
 
 Tensor&	Variable::value()

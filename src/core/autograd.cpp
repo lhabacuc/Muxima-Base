@@ -2,22 +2,24 @@
 
 #include "math.h"
 
-#include <stdexcept>
-
 void	Autograd::add_backward(
 	Variable& left,
 	Variable& right,
 	const Tensor& output_gradient)
 {
 	if (left.requires_grad())
+	{
 		left.gradient() = add(
 			left.gradient(),
 			output_gradient);
+	}
 
 	if (right.requires_grad())
+	{
 		right.gradient() = add(
 			right.gradient(),
 			output_gradient);
+	}
 }
 
 void	Autograd::subtract_backward(
@@ -26,14 +28,18 @@ void	Autograd::subtract_backward(
 	const Tensor& output_gradient)
 {
 	if (left.requires_grad())
+	{
 		left.gradient() = add(
 			left.gradient(),
 			output_gradient);
+	}
 
 	if (right.requires_grad())
+	{
 		right.gradient() = subtract(
 			right.gradient(),
 			output_gradient);
+	}
 }
 
 void	Autograd::multiply_backward(
@@ -49,14 +55,18 @@ void	Autograd::multiply_backward(
 		left.value());
 
 	if (left.requires_grad())
+	{
 		left.gradient() = add(
 			left.gradient(),
 			left_gradient);
+	}
 
 	if (right.requires_grad())
+	{
 		right.gradient() = add(
 			right.gradient(),
 			right_gradient);
+	}
 }
 
 void	Autograd::matmul_backward(
@@ -72,12 +82,16 @@ void	Autograd::matmul_backward(
 		output_gradient);
 
 	if (left.requires_grad())
+	{
 		left.gradient() = add(
 			left.gradient(),
 			left_gradient);
+	}
 
 	if (right.requires_grad())
+	{
 		right.gradient() = add(
 			right.gradient(),
 			right_gradient);
+	}
 }

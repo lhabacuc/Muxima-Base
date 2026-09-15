@@ -1,35 +1,40 @@
-#include "../src/core/autograd.h"
+#include "../src/core/autograd_graph.h"
 
 #include <cassert>
 #include <iostream>
 #include <vector>
 
+static Tensor	create_scalar(float value)
+{
+	Tensor	result(std::vector<size_t>(1, 1));
+
+	result.data()[0] = value;
+	return (result);
+}
+
 int	main()
 {
-	std::vector<size_t>	shape;
-	Tensor				a_value(std::vector<size_t>(1, 2));
-	Tensor				b_value(std::vector<size_t>(1, 2));
-	Tensor				gradient(std::vector<size_t>(1, 2));
-	Variable			a(a_value, true);
-	Variable			b(b_value, true);
+	Tensor			a_value = create_scalar(2.0f);
+	Tensor			b_value = create_scalar(3.0f);
+	Variable		a(a_value, true);
+	Variable		b(b_value, true);
+	AutogradGraph	graph;
+	Variable		*c;
+	Variable		*d;
 
-	a.value().data()[0] = 2.0f;
-	a.value().data()[1] = 3.0f;
+	c = graph.multiply(a, b);
+	d = graph.add(*c, a);
 
-	b.value().data()[0] = 4.0f;
-	b.value().data()[1] = 5.0f;
+	graph.backward(*d);
 
-	gradient.data()[0] = 1.0f;
-	gradient.data()[1] = 1.0f;
-
-	Autograd::multiply_backward(a, b, gradient);
+	assert(c->value().data()[0] == 6.0f);
+	assert(d->value().data()[0] == 8.0f);
 
 	assert(a.gradient().data()[0] == 4.0f);
-	assert(a.gradient().data()[1] == 5.0f);
-
 	assert(b.gradient().data()[0] == 2.0f);
-	assert(b.gradient().data()[1] == 3.0f);
 
-	std::cout << "Autograd tests passed" << std::endl;
+	std::cout << "Autograd graph tests passed"
+		<< std::endl;
+
 	return (0);
 }

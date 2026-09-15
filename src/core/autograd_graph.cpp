@@ -3,7 +3,7 @@
 #include "autograd.h"
 #include "math.h"
 
-#include <stdexcept>
+#include <cstddef>
 
 AutogradGraph::Node::Node(
 	OperationType operation,
@@ -34,4 +34,227 @@ AutogradGraph::~AutogradGraph()
 	}
 }
 
+AutogradGraph::Node*	AutogradGraph::find_node(
+	Variable& variable)
+{
+	size_t	i;
 
+	i = 0;
+	while (i < _nodes.size())
+	{
+		if (_nodes[i]->output == &variable)
+			return (_nodes[i]);
+		i++;
+	}
+	return (NULL);
+}
+
+Variable*	AutogradGraph::add(
+	Variable& left,
+	Variable& right)
+{
+	Tensor		value = ::add(
+		left.value(),
+		right.value());
+	Variable	*output;
+	Node		*node;
+
+	output = new Variable(value, true);
+
+	node = new Node(
+		OP_ADD,
+		output,
+		&left,
+		&right);
+
+	_nodes.push_back(node);
+	return (output);
+}
+
+Variable*	AutogradGraph::subtract(
+	Variable& left,
+	Variable& right)
+{
+	Tensor		value = ::subtract(
+		left.value(),
+		right.value());
+	Variable	*output;
+	Node		*node;
+
+	output = new Variable(value, true);
+
+	node = new Node(
+		OP_SUBTRACT,
+		output,
+		&left,
+		&right);
+
+	_nodes.push_back(node);
+	return (output);
+}
+
+Variable*	AutogradGraph::multiply(
+	Variable& left,
+	Variable& right)
+{
+	Tensor		value = ::multiply(
+		left.value(),
+		right.value());
+	Variable	*output;
+	Node		*node;
+
+	output = new Variable(value, true);
+
+	node = new Node(
+		OP_MULTIPLY,
+		output,
+		&left,
+		&right);
+
+	_nodes.push_back(node);
+	return (output);
+}
+
+Variable*	AutogradGraph::matmul(
+	Variable& left,
+	Variable& right)
+{
+	Tensor		value = ::matmul(
+		left.value(),
+		right.value());
+	Variable	*output;
+	Node		*node;
+
+	output = new Variable(value, true);
+
+	node = new Node(
+		OP_MATMUL,
+		output,
+		&left,
+		&right);
+
+	_nodes.push_back(node);
+	return (output);
+}
+
+void	AutogradGraph::backward_node(
+	Node *node)
+{
+	if (node->type == OP_ADD)
+	{
+		Autograd::add_backward(
+			*node->left,
+			*node->right,
+			node->output->gradient());
+	}
+	else if (node->type == OP_SUBTRACT)
+	{
+		Autograd::subtract_backward(
+			*node->left,
+			*node->right,
+			node->output->gradient());
+	}
+	else if (node->type == OP_MULTIPLY)
+	{
+		Autograd::multiply_backward(
+			*node->left,
+			*node->right,
+			node->output->gradient());
+	}
+	else if (node->type == OP_MATMUL)
+	{
+		Autograd::matmul_backward(
+			*node->left,
+			*node->right,
+			node->output->gradient());
+	}
+}
+
+void	AutogradGraph::build_node_topology(
+	Node *node,
+	std::vector<Node*>& topology,
+	std::vector<Variable*>& visited)
+{
+	size_t	i;
+	Node	*parent;
+
+	i = 0;
+	while (i < visited.size())
+	{
+		if (visited[i] == node->output)
+			return ;
+		i++;
+	}
+
+	visited.push_back(node->output);
+
+	parent = find_node(*node->left);
+	if (parent != NULL)
+	{
+		build_node_topology(
+			parent,
+			topology,
+			visited);
+	}
+
+	parent = find_node(*node->right);
+	if (parent != NULL)
+	{
+		build_node_topology(
+			parent,
+			topology,
+			visited);
+	}
+
+	topology.push_back(node);
+}
+
+void	AutogradGraph::build_topology(
+	Variable& variable,
+	std::vector<Node*>& topology,
+	std::vector<Variable*>& visited)
+{
+	Node	*node;
+
+	node = find_node(variable);
+	if (node == NULL)
+		return ;
+
+	build_node_topology(
+		node,
+		topology,
+		visited);
+}
+
+void	AutogradGraph::backward(
+	Variable& output)
+{
+	std::vector<Node*>		topology;
+	std::vector<Variable*>	visited;
+	size_t					i;
+
+	if (!output.requires_grad())
+		return ;
+
+	i = 0;
+	while (i < output.gradient().size())
+	{
+		output.gradient().data()[i] = 1.0f;
+		i++;
+	}
+
+	build_topology(
+		output,
+		topology,
+		visited);
+
+	i = topology.size();
+
+	while (i > 0)
+	{
+		i--;
+
+		backward_node(
+			topology[i]);
+	}
+}

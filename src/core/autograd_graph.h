@@ -33,7 +33,21 @@ class AutogradGraph
 
 		std::vector<Node*>	_nodes;
 
-		void	backward_node(Node *node);
+		Node*	find_node(
+			Variable& variable);
+
+		void	backward_node(
+			Node *node);
+
+		void	build_topology(
+			Variable& variable,
+			std::vector<Node*>& topology,
+			std::vector<Variable*>& visited);
+
+		void	build_node_topology(
+			Node *node,
+			std::vector<Node*>& topology,
+			std::vector<Variable*>& visited);
 
 	public:
 		AutogradGraph();
@@ -55,7 +69,8 @@ class AutogradGraph
 			Variable& left,
 			Variable& right);
 
-		void	backward(Variable& output);
+		void	backward(
+			Variable& output);
 };
 
 #endif
