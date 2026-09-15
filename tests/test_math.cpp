@@ -152,6 +152,61 @@ static int	test_transpose()
 	return (0);
 }
 
+#include "../src/core/math.h"
+
+#include <iostream>
+#include <vector>
+
+static int	test_add()
+{
+	std::vector<size_t> shape;
+	Tensor	*a;
+	Tensor	*b;
+	Tensor	*result;
+
+	shape.push_back(2);
+	shape.push_back(3);
+
+	a = new Tensor(shape);
+	b = new Tensor(shape);
+
+	a->data()[0] = 1.0f;
+	a->data()[1] = 2.0f;
+	a->data()[2] = 3.0f;
+	a->data()[3] = 4.0f;
+	a->data()[4] = 5.0f;
+	a->data()[5] = 6.0f;
+
+	b->data()[0] = 10.0f;
+	b->data()[1] = 20.0f;
+	b->data()[2] = 30.0f;
+	b->data()[3] = 40.0f;
+	b->data()[4] = 50.0f;
+	b->data()[5] = 60.0f;
+
+	result = new Tensor(add(*a, *b).shape());
+	*result = add(*a, *b);
+
+	if (result->data()[0] != 11.0f)
+		return (1);
+	if (result->data()[1] != 22.0f)
+		return (1);
+	if (result->data()[2] != 33.0f)
+		return (1);
+	if (result->data()[3] != 44.0f)
+		return (1);
+	if (result->data()[4] != 55.0f)
+		return (1);
+	if (result->data()[5] != 66.0f)
+		return (1);
+
+	delete a;
+	delete b;
+	delete result;
+	return (0);
+}
+
+
 int	main()
 {
 	if (test_operations() != 0)
@@ -172,6 +227,12 @@ int	main()
 		return (1);
 	}
 	std::cout << "test_transpose: OK" << std::endl;
+	if (test_add() != 0)
+	{
+		std::cout << "test_add: FAIL" << std::endl;
+		return (1);
+	}
+	std::cout << "test_add: OK" << std::endl;
 	return (0);
 }
 
