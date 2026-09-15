@@ -11,19 +11,33 @@ Tensor::Tensor(const std::vector<size_t>& shape)
 	_data.resize(elements);
 }
 
-size_t Tensor::index(size_t row, size_t column) const
+size_t Tensor::index(const std::vector<size_t>& position) const
 {
-	return (row * _shape[1] + column);
+	size_t index;
+	size_t stride;
+	size_t i;
+
+	index = 0;
+	stride = 1;
+	i = _shape.size();
+
+	while (i > 0)
+	{
+		i--;
+		index += position[i] * stride;
+		stride *= _shape[i];
+	}
+	return (index);
 }
 
-float& Tensor::operator()(size_t row, size_t column)
+float& Tensor::at(const std::vector<size_t>& position)
 {
-	return (_data[index(row, column)]);
+	return (_data[index(position)]);
 }
 
-const float& Tensor::operator()(size_t row, size_t column) const
+const float& Tensor::at(const std::vector<size_t>& position) const
 {
-	return (_data[index(row, column)]);
+	return (_data[index(position)]);
 }
 
 const std::vector<float>& Tensor::data() const

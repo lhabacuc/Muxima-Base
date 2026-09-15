@@ -10,13 +10,13 @@ class Tensor
 		std::vector<float> _data;
 		std::vector<size_t> _shape;
 
-		size_t	index(size_t row, size_t column) const;
+		size_t	index(const std::vector<size_t>& position) const;
 
 	public:
 		Tensor(const std::vector<size_t>& shape);
 
-		float&	operator()(size_t row, size_t column);
-		const float&	operator()(size_t row, size_t column) const;
+		float&	at(const std::vector<size_t>& position);
+		const float&	at(const std::vector<size_t>& position) const;
 
 		const std::vector<float>& data() const;
 		const std::vector<size_t>& shape() const;
