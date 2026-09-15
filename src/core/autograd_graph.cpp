@@ -3,17 +3,21 @@
 #include "autograd.h"
 #include "math.h"
 
+#include "../training/cross_entropy.h"
+
 #include <cstddef>
 
 AutogradGraph::Node::Node(
 	OperationType operation,
 	Variable *output_variable,
 	Variable *left_variable,
-	Variable *right_variable)
+	Variable *right_variable,
+	Tensor *target_tensor)
 	: type(operation),
 	output(output_variable),
 	left(left_variable),
-	right(right_variable)
+	right(right_variable),
+	targets(target_tensor)
 {
 }
 
@@ -29,6 +33,7 @@ AutogradGraph::~AutogradGraph()
 	while (i < _nodes.size())
 	{
 		delete _nodes[i]->output;
+		delete _nodes[i]->targets;
 		delete _nodes[i];
 		i++;
 	}
@@ -65,7 +70,8 @@ Variable*	AutogradGraph::add(
 		OP_ADD,
 		output,
 		&left,
-		&right);
+		&right,
+		NULL);
 
 	_nodes.push_back(node);
 	return (output);
@@ -87,7 +93,8 @@ Variable*	AutogradGraph::subtract(
 		OP_SUBTRACT,
 		output,
 		&left,
-		&right);
+		&right,
+		NULL);
 
 	_nodes.push_back(node);
 	return (output);
@@ -109,7 +116,8 @@ Variable*	AutogradGraph::multiply(
 		OP_MULTIPLY,
 		output,
 		&left,
-		&right);
+		&right,
+		NULL);
 
 	_nodes.push_back(node);
 	return (output);
@@ -131,9 +139,89 @@ Variable*	AutogradGraph::matmul(
 		OP_MATMUL,
 		output,
 		&left,
-		&right);
+		&right,
+		NULL);
 
 	_nodes.push_back(node);
+	return (output);
+}
+
+Variable*	AutogradGraph::relu(
+	Variable& input)
+{
+	Tensor		value = ::relu(input.value());
+	Variable	*output;
+	Node		*node;
+
+	output = new Variable(
+		value,
+		true);
+
+	node = new Node(
+		OP_RELU,
+		output,
+		&input,
+		NULL,
+		NULL);
+
+	_nodes.push_back(node);
+
+	return (output);
+}
+
+Variable*	AutogradGraph::gelu(
+	Variable& input)
+{
+	Tensor		value = ::gelu(input.value());
+	Variable	*output;
+	Node		*node;
+
+	output = new Variable(
+		value,
+		true);
+
+	node = new Node(
+		OP_GELU,
+		output,
+		&input,
+		NULL,
+		NULL);
+
+	_nodes.push_back(node);
+
+	return (output);
+}
+
+Variable*	AutogradGraph::cross_entropy(
+	Variable& logits,
+	const Tensor& targets)
+{
+	Tensor		value_tensor(
+		std::vector<size_t>(1, 1));
+	Variable	*output;
+	Tensor		*stored_targets;
+	Node		*node;
+
+	value_tensor.data()[0] =
+		CrossEntropy::forward(
+			logits.value(),
+			targets);
+
+	output = new Variable(
+		value_tensor,
+		true);
+
+	stored_targets = new Tensor(targets);
+
+	node = new Node(
+		OP_CROSS_ENTROPY,
+		output,
+		&logits,
+		NULL,
+		stored_targets);
+
+	_nodes.push_back(node);
+
 	return (output);
 }
 
@@ -168,6 +256,25 @@ void	AutogradGraph::backward_node(
 			*node->right,
 			node->output->gradient());
 	}
+	else if (node->type == OP_RELU)
+	{
+		Autograd::relu_backward(
+			*node->left,
+			node->output->gradient());
+	}
+	else if (node->type == OP_GELU)
+	{
+		Autograd::gelu_backward(
+			*node->left,
+			node->output->gradient());
+	}
+	else if (node->type == OP_CROSS_ENTROPY)
+	{
+		Autograd::cross_entropy_backward(
+			*node->left,
+			*node->targets,
+			node->output->gradient());
+	}
 }
 
 void	AutogradGraph::build_node_topology(
@@ -197,13 +304,16 @@ void	AutogradGraph::build_node_topology(
 			visited);
 	}
 
-	parent = find_node(*node->right);
-	if (parent != NULL)
+	if (node->right != NULL)
 	{
-		build_node_topology(
-			parent,
-			topology,
-			visited);
+		parent = find_node(*node->right);
+		if (parent != NULL)
+		{
+			build_node_topology(
+				parent,
+				topology,
+				visited);
+		}
 	}
 
 	topology.push_back(node);

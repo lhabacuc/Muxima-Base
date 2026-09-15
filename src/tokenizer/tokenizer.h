@@ -1,45 +1,58 @@
-#ifndef TRANSFORMER_H
-# define TRANSFORMER_H
+#ifndef TOKENIZER_H
+# define TOKENIZER_H
 
-# include "../core/tensor.h"
-# include "../nn/embedding.h"
-# include "../nn/positional_encoding.h"
-# include "../nn/layer_norm.h"
-# include "transformer_block.h"
+# include "../io/json.hpp"
 
+# include <map>
+# include <string>
 # include <vector>
 
-class Transformer
+class Tokenizer
 {
 	private:
-		size_t	_embedding_dim;
+		std::map<std::string, size_t>	_vocab;
+		std::map<std::string, size_t>	_merge_ranks;
+		std::map<size_t, std::string>	_id_to_token;
 
-		Embedding			_embedding;
-		PositionalEncoding	_positional;
-		LayerNorm			_final_norm;
-		std::vector<TransformerBlock>	_blocks;
+		size_t	_unknown_id;
+		size_t	_pad_id;
+		size_t	_bos_id;
+		size_t	_eos_id;
 
-		static std::vector<TransformerBlock>	create_blocks(
-			size_t num_layers,
-			size_t embedding_dim,
-			size_t num_heads,
-			size_t hidden_dim);
+		std::vector<std::string>	split_text(
+			const std::string& text) const;
+
+		std::vector<std::string>	split_word(
+			const std::string& word) const;
+
+		std::vector<std::string>	apply_bpe(
+			const std::string& word) const;
+
+		std::string	merge_key(
+			const std::string& left,
+			const std::string& right) const;
 
 	public:
-		Transformer(
-			size_t vocab_size,
-			size_t max_length,
-			size_t embedding_dim,
-			size_t num_layers,
-			size_t num_heads,
-			size_t hidden_dim);
+		Tokenizer();
 
-		Tensor	forward(const Tensor& tokens);
+		void	load(
+			const std::string& path);
 
-		Embedding&			embedding();
-		PositionalEncoding&	positional();
-		LayerNorm&			final_norm();
-		std::vector<TransformerBlock>&	blocks();
+		void	save(
+			const std::string& path) const;
+
+		std::vector<size_t>	encode(
+			const std::string& text) const;
+
+		std::string	decode(
+			const std::vector<size_t>& tokens) const;
+
+		size_t	vocab_size() const;
+
+		size_t	unknown_id() const;
+		size_t	pad_id() const;
+		size_t	bos_id() const;
+		size_t	eos_id() const;
 };
 
 #endif

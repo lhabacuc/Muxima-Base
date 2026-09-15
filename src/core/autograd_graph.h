@@ -14,7 +14,10 @@ class AutogradGraph
 			OP_ADD,
 			OP_SUBTRACT,
 			OP_MULTIPLY,
-			OP_MATMUL
+			OP_MATMUL,
+			OP_RELU,
+			OP_GELU,
+			OP_CROSS_ENTROPY
 		};
 
 		struct Node
@@ -23,12 +26,14 @@ class AutogradGraph
 			Variable		*output;
 			Variable		*left;
 			Variable		*right;
+			Tensor			*targets;
 
 			Node(
 				OperationType type,
 				Variable *output,
 				Variable *left,
-				Variable *right);
+				Variable *right,
+				Tensor *targets);
 		};
 
 		std::vector<Node*>	_nodes;
@@ -68,6 +73,16 @@ class AutogradGraph
 		Variable*	matmul(
 			Variable& left,
 			Variable& right);
+
+		Variable*	relu(
+			Variable& input);
+
+		Variable*	gelu(
+			Variable& input);
+
+		Variable*	cross_entropy(
+			Variable& logits,
+			const Tensor& targets);
 
 		void	backward(
 			Variable& output);

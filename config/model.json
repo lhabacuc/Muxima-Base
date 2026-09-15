@@ -1,0 +1,20 @@
+{
+    "model": {
+        "name": "Muxima-Base",
+        "vocab_size": 32000,
+        "max_length": 1024,
+        "embedding_dim": 512,
+        "num_layers": 8,
+        "num_heads": 8,
+        "hidden_dim": 2048
+    },
+    "training": {
+        "learning_rate": 0.0003,
+        "batch_size": 8,
+        "epochs": 3
+    },
+    "tokenizer": {
+        "type": "bpe",
+        "vocab_size": 32000
+    }
+}

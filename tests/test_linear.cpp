@@ -17,15 +17,15 @@ int	main()
 	input.data()[1] = 2.0f;
 	input.data()[2] = 3.0f;
 
-	layer.weights().data()[0] = 1.0f;
-	layer.weights().data()[1] = 2.0f;
-	layer.weights().data()[2] = 3.0f;
-	layer.weights().data()[3] = 4.0f;
-	layer.weights().data()[4] = 5.0f;
-	layer.weights().data()[5] = 6.0f;
+	layer.weights().value().data()[0] = 1.0f;
+	layer.weights().value().data()[1] = 2.0f;
+	layer.weights().value().data()[2] = 3.0f;
+	layer.weights().value().data()[3] = 4.0f;
+	layer.weights().value().data()[4] = 5.0f;
+	layer.weights().value().data()[5] = 6.0f;
 
-	layer.bias().data()[0] = 1.0f;
-	layer.bias().data()[1] = 2.0f;
+	layer.bias().value().data()[0] = 1.0f;
+	layer.bias().value().data()[1] = 2.0f;
 
 	{
 		Tensor	output = layer.forward(input);

@@ -9,6 +9,10 @@ class CrossEntropy
 		static float	forward(
 			const Tensor& logits,
 			const Tensor& targets);
+
+		static Tensor	backward(
+			const Tensor& logits,
+			const Tensor& targets);
 };
 
 #endif

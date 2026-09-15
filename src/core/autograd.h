@@ -25,6 +25,19 @@ class Autograd
 			Variable& left,
 			Variable& right,
 			const Tensor& output_gradient);
+
+		static void	relu_backward(
+			Variable& input,
+			const Tensor& output_gradient);
+
+		static void	gelu_backward(
+			Variable& input,
+			const Tensor& output_gradient);
+
+		static void	cross_entropy_backward(
+			Variable& logits,
+			const Tensor& targets,
+			const Tensor& output_gradient);
 };
 
 #endif
