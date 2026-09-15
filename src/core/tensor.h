@@ -18,6 +18,8 @@ class Tensor
 		float&	at(const std::vector<size_t>& position);
 		const float&	at(const std::vector<size_t>& position) const;
 
+		void	reshape(const std::vector<size_t>& new_shape);
+
 		const std::vector<float>& data() const;
 		const std::vector<size_t>& shape() const;
 		size_t size() const;
