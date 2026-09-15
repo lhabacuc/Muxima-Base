@@ -23,8 +23,8 @@ class Tensor
 		std::vector<float>&	data();
 		const std::vector<float>&	data() const;
 
-		const std::vector<size_t>& shape() const;
-		size_t size() const;
+		const std::vector<size_t>&	shape() const;
+		size_t	size() const;
 };
 
 #endif

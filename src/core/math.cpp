@@ -4,8 +4,8 @@
 
 Tensor	add(const Tensor& a, const Tensor& b)
 {
-	Tensor result(a.shape());
-	size_t i;
+	Tensor	result(a.shape());
+	size_t	i;
 
 	if (a.shape() != b.shape())
 		throw (std::invalid_argument("Tensor shapes must match"));
