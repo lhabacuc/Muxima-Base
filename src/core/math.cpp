@@ -1,5 +1,6 @@
 #include "math.h"
 
+#include <matrix-hpp/matrix.hpp>
 #include <cmath>
 #include <stdexcept>
 
@@ -203,46 +204,58 @@ static Tensor	create_matmul_result(const Tensor& a, const Tensor& b)
 	return (Tensor(shape));
 }
 
-static void	fill_matmul(Tensor& result, const Tensor& a, const Tensor& b)
+Tensor	matmul(const Tensor& a, const Tensor& b)
 {
-	size_t	rows;
-	size_t	inner;
-	size_t	columns;
-	size_t	i;
-	size_t	j;
-	size_t	k;
-	float	sum;
+	// Using matrix-hpp (https://github.com/gc1905/matrix-hpp) for optimized matmul
+	if (a.shape().size() != 2 || b.shape().size() != 2)
+		throw (std::invalid_argument("matmul requires 2D tensors"));
+	if (a.shape()[1] != b.shape()[0])
+		throw (std::invalid_argument("Invalid matmul shapes"));
 
-	rows = a.shape()[0];
-	inner = a.shape()[1];
-	columns = b.shape()[1];
+	size_t rows = a.shape()[0];
+	size_t inner = a.shape()[1];
+	size_t cols = b.shape()[1];
 
-	i = 0;
+	Mtx::Matrix<float> matA(rows, inner);
+	Mtx::Matrix<float> matB(inner, cols);
+
+	size_t i = 0;
 	while (i < rows)
 	{
-		j = 0;
-		while (j < columns)
+		size_t j = 0;
+		while (j < inner)
 		{
-			sum = 0.0f;
-			k = 0;
-			while (k < inner)
-			{
-				sum += a.data()[i * inner + k]
-					* b.data()[k * columns + j];
-				k++;
-			}
-			result.data()[i * columns + j] = sum;
+			matA(i, j) = a.data()[i * inner + j];
 			j++;
 		}
 		i++;
 	}
-}
+	i = 0;
+	while (i < inner)
+	{
+		size_t j = 0;
+		while (j < cols)
+		{
+			matB(i, j) = b.data()[i * cols + j];
+			j++;
+		}
+		i++;
+	}
 
-Tensor	matmul(const Tensor& a, const Tensor& b)
-{
-	Tensor	result(create_matmul_result(a, b));
+	Mtx::Matrix<float> matC = matA * matB;
 
-	fill_matmul(result, a, b);
+	Tensor result(create_matmul_result(a, b));
+	i = 0;
+	while (i < rows)
+	{
+		size_t j = 0;
+		while (j < cols)
+		{
+			result.data()[i * cols + j] = matC(i, j);
+			j++;
+		}
+		i++;
+	}
 	return (result);
 }
 
@@ -260,23 +273,36 @@ static Tensor	create_transpose_result(const Tensor& tensor)
 
 Tensor	transpose(const Tensor& tensor)
 {
-	Tensor	result(create_transpose_result(tensor));
-	size_t	rows;
-	size_t	columns;
-	size_t	i;
-	size_t	j;
+	// Using matrix-hpp transpose (https://github.com/gc1905/matrix-hpp)
+	if (tensor.shape().size() != 2)
+		throw (std::invalid_argument("transpose requires 2D tensor"));
 
-	rows = tensor.shape()[0];
-	columns = tensor.shape()[1];
+	size_t rows = tensor.shape()[0];
+	size_t cols = tensor.shape()[1];
 
-	i = 0;
+	Mtx::Matrix<float> mat(rows, cols);
+	size_t i = 0;
 	while (i < rows)
 	{
-		j = 0;
-		while (j < columns)
+		size_t j = 0;
+		while (j < cols)
 		{
-			result.data()[j * rows + i]
-				= tensor.data()[i * columns + j];
+			mat(i, j) = tensor.data()[i * cols + j];
+			j++;
+		}
+		i++;
+	}
+
+	Mtx::Matrix<float> matT = Mtx::transpose(mat);
+
+	Tensor result(create_transpose_result(tensor));
+	i = 0;
+	while (i < cols)
+	{
+		size_t j = 0;
+		while (j < rows)
+		{
+			result.data()[i * rows + j] = matT(i, j);
 			j++;
 		}
 		i++;
@@ -347,6 +373,4 @@ Tensor	sqrt(const Tensor& tensor)
 	}
 	return (result);
 }
-
-
 
