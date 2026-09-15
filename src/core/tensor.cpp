@@ -65,6 +65,16 @@ void Tensor::reshape(const std::vector<size_t>& new_shape)
 	_shape = new_shape;
 }
 
+std::vector<float>& Tensor::data()
+{
+	return (_data);
+}
+
+const std::vector<float>& Tensor::data() const
+{
+	return (_data);
+}
+
 float& Tensor::at(const std::vector<size_t>& position)
 {
 	return (_data[index(position)]);
