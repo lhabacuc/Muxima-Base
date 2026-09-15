@@ -1,5 +1,6 @@
 #include "math.h"
 
+#include <cmath>
 #include <stdexcept>
 
 Tensor	add(const Tensor& a, const Tensor& b)
@@ -14,6 +15,45 @@ Tensor	add(const Tensor& a, const Tensor& b)
 	while (i < a.size())
 	{
 		result.data()[i] = a.data()[i] + b.data()[i];
+		i++;
+	}
+	return (result);
+}
+
+static Tensor	create_softmax_result(const Tensor& tensor)
+{
+	return (Tensor(tensor.shape()));
+}
+
+Tensor	softmax(const Tensor& tensor)
+{
+	Tensor	result(create_softmax_result(tensor));
+	float	max_value;
+	float	sum;
+	size_t	i;
+
+	max_value = tensor.data()[0];
+	i = 1;
+	while (i < tensor.size())
+	{
+		if (tensor.data()[i] > max_value)
+			max_value = tensor.data()[i];
+		i++;
+	}
+
+	sum = 0.0f;
+	i = 0;
+	while (i < tensor.size())
+	{
+		result.data()[i] = std::exp(tensor.data()[i] - max_value);
+		sum += result.data()[i];
+		i++;
+	}
+
+	i = 0;
+	while (i < tensor.size())
+	{
+		result.data()[i] /= sum;
 		i++;
 	}
 	return (result);
@@ -161,3 +201,68 @@ Tensor	transpose(const Tensor& tensor)
 	}
 	return (result);
 }
+
+float	sum(const Tensor& tensor)
+{
+	float	result;
+	size_t	i;
+
+	result = 0.0f;
+	i = 0;
+	while (i < tensor.size())
+	{
+		result += tensor.data()[i];
+		i++;
+	}
+	return (result);
+}
+
+float	mean(const Tensor& tensor)
+{
+	if (tensor.size() == 0)
+		throw (std::invalid_argument("Cannot calculate mean of empty tensor"));
+	return (sum(tensor) / static_cast<float>(tensor.size()));
+}
+
+Tensor	exp(const Tensor& tensor)
+{
+	Tensor	result(tensor.shape());
+	size_t	i;
+
+	i = 0;
+	while (i < tensor.size())
+	{
+		result.data()[i] = std::exp(tensor.data()[i]);
+		i++;
+	}
+	return (result);
+}
+
+Tensor	log(const Tensor& tensor)
+{
+	Tensor	result(tensor.shape());
+	size_t	i;
+
+	i = 0;
+	while (i < tensor.size())
+	{
+		result.data()[i] = std::log(tensor.data()[i]);
+		i++;
+	}
+	return (result);
+}
+
+Tensor	sqrt(const Tensor& tensor)
+{
+	Tensor	result(tensor.shape());
+	size_t	i;
+
+	i = 0;
+	while (i < tensor.size())
+	{
+		result.data()[i] = std::sqrt(tensor.data()[i]);
+		i++;
+	}
+	return (result);
+}
+

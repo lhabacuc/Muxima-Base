@@ -152,11 +152,6 @@ static int	test_transpose()
 	return (0);
 }
 
-#include "../src/core/math.h"
-
-#include <iostream>
-#include <vector>
-
 static int	test_add()
 {
 	std::vector<size_t> shape;
@@ -206,6 +201,96 @@ static int	test_add()
 	return (0);
 }
 
+static int	test_softmax()
+{
+	std::vector<size_t> shape;
+	Tensor	*tensor;
+
+	shape.push_back(3);
+	tensor = new Tensor(shape);
+
+	tensor->data()[0] = 1.0f;
+	tensor->data()[1] = 2.0f;
+	tensor->data()[2] = 3.0f;
+
+	{
+		Tensor	result = softmax(*tensor);
+		float	sum;
+
+		sum = result.data()[0]
+			+ result.data()[1]
+			+ result.data()[2];
+
+		if (sum < 0.999f || sum > 1.001f)
+			return (1);
+		if (result.data()[0] >= result.data()[1])
+			return (1);
+		if (result.data()[1] >= result.data()[2])
+			return (1);
+	}
+
+	delete tensor;
+	return (0);
+}
+
+static int	test_statistics()
+{
+	std::vector<size_t> shape;
+	Tensor	*tensor;
+	float	total;
+	float	average;
+
+	shape.push_back(4);
+	tensor = new Tensor(shape);
+
+	tensor->data()[0] = 1.0f;
+	tensor->data()[1] = 2.0f;
+	tensor->data()[2] = 3.0f;
+	tensor->data()[3] = 4.0f;
+
+	total = sum(*tensor);
+	average = mean(*tensor);
+
+	if (total != 10.0f)
+		return (1);
+	if (average != 2.5f)
+		return (1);
+
+	delete tensor;
+	return (0);
+}
+
+static int	test_math_functions()
+{
+	std::vector<size_t> shape;
+	Tensor	*tensor;
+
+	shape.push_back(3);
+	tensor = new Tensor(shape);
+
+	tensor->data()[0] = 1.0f;
+	tensor->data()[1] = 2.0f;
+	tensor->data()[2] = 4.0f;
+
+	{
+		Tensor	result_exp = exp(*tensor);
+		Tensor	result_log = log(*tensor);
+		Tensor	result_sqrt = sqrt(*tensor);
+
+		if (result_exp.data()[0] < 2.7f
+			|| result_exp.data()[0] > 2.8f)
+			return (1);
+		if (result_log.data()[0] < -0.01f
+			|| result_log.data()[0] > 0.01f)
+			return (1);
+		if (result_sqrt.data()[2] < 1.99f
+			|| result_sqrt.data()[2] > 2.01f)
+			return (1);
+	}
+
+	delete tensor;
+	return (0);
+}
 
 int	main()
 {
@@ -233,6 +318,26 @@ int	main()
 		return (1);
 	}
 	std::cout << "test_add: OK" << std::endl;
+	if (test_softmax() != 0)
+	{
+		std::cout << "test_softmax: FAIL" << std::endl;
+		return (1);
+	}
+	std::cout << "test_softmax: OK" << std::endl;
+
+	if (test_statistics() != 0)
+	{
+		std::cout << "test_statistics: FAIL" << std::endl;
+		return (1);
+	}
+	std::cout << "test_statistics: OK" << std::endl;
+
+	if (test_math_functions() != 0)
+	{
+		std::cout << "test_math_functions: FAIL" << std::endl;
+		return (1);
+	}
+	std::cout << "test_math_functions: OK" << std::endl;
 	return (0);
 }
 
