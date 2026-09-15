@@ -341,6 +341,65 @@ static int	test_broadcast()
 	return (0);
 }
 
+static int	test_relu()
+{
+	std::vector<size_t> shape;
+	Tensor	*tensor;
+
+	shape.push_back(5);
+	tensor = new Tensor(shape);
+
+	tensor->data()[0] = -2.0f;
+	tensor->data()[1] = -1.0f;
+	tensor->data()[2] = 0.0f;
+	tensor->data()[3] = 2.0f;
+	tensor->data()[4] = 5.0f;
+
+	{
+		Tensor	result = relu(*tensor);
+
+		if (result.data()[0] != 0.0f)
+			return (1);
+		if (result.data()[1] != 0.0f)
+			return (1);
+		if (result.data()[2] != 0.0f)
+			return (1);
+		if (result.data()[3] != 2.0f)
+			return (1);
+		if (result.data()[4] != 5.0f)
+			return (1);
+	}
+
+	delete tensor;
+	return (0);
+}
+
+static int	test_gelu()
+{
+	std::vector<size_t> shape;
+	Tensor	*tensor;
+
+	shape.push_back(3);
+	tensor = new Tensor(shape);
+
+	tensor->data()[0] = -1.0f;
+	tensor->data()[1] = 0.0f;
+	tensor->data()[2] = 1.0f;
+
+	{
+		Tensor	result = gelu(*tensor);
+
+		if (result.data()[1] != 0.0f)
+			return (1);
+		if (result.data()[2] < 0.84f
+			|| result.data()[2] > 0.85f)
+			return (1);
+	}
+
+	delete tensor;
+	return (0);
+}
+
 int	main()
 {
 	if (test_operations() != 0)
@@ -398,6 +457,20 @@ int	main()
 		return (1);
 	}
 	std::cout << "test_broadcast: OK" << std::endl;
+
+	if (test_relu() != 0)
+	{
+		std::cout << "test_relu: FAIL" << std::endl;
+		return (1);
+	}
+	std::cout << "test_relu: OK" << std::endl;
+
+	if (test_gelu() != 0)
+	{
+		std::cout << "test_gelu: FAIL" << std::endl;
+		return (1);
+	}
+	std::cout << "test_gelu: OK" << std::endl;
 	
 	return (0);
 }

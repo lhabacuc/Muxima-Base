@@ -17,4 +17,7 @@ Tensor	exp(const Tensor& tensor);
 Tensor	log(const Tensor& tensor);
 Tensor	sqrt(const Tensor& tensor);
 
+Tensor	relu(const Tensor& tensor);
+Tensor	gelu(const Tensor& tensor);
+
 #endif

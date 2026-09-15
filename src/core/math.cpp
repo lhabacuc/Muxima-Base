@@ -14,6 +14,40 @@ static bool	can_broadcast_bias(const Tensor& a, const Tensor& b)
 	return (true);
 }
 
+Tensor	relu(const Tensor& tensor)
+{
+	Tensor	result(tensor.shape());
+	size_t	i;
+
+	i = 0;
+	while (i < tensor.size())
+	{
+		if (tensor.data()[i] > 0.0f)
+			result.data()[i] = tensor.data()[i];
+		else
+			result.data()[i] = 0.0f;
+		i++;
+	}
+	return (result);
+}
+
+Tensor	gelu(const Tensor& tensor)
+{
+	Tensor	result(tensor.shape());
+	float	x;
+	size_t	i;
+
+	i = 0;
+	while (i < tensor.size())
+	{
+		x = tensor.data()[i];
+		result.data()[i] = 0.5f * x
+			* (1.0f + ::erf(x / std::sqrt(2.0f)));
+		i++;
+	}
+	return (result);
+}
+
 Tensor	add(const Tensor& a, const Tensor& b)
 {
 	Tensor	result(a.shape());
