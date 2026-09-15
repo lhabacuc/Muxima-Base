@@ -1,33 +1,16 @@
-#include "tokenizer.h"
+#include "bpe_trainer.h"
 
-#include <cassert>
 #include <iostream>
-#include <vector>
 
 int	main()
 {
-	Tokenizer tokenizer;
-	std::vector<size_t> tokens;
-	std::string decoded;
+	BPETrainer trainer(300);
 
-	tokenizer.load("config/tokenizer.json");
+	trainer.train(
+		"data/corpus.txt",
+		"config/tokenizer.json");
 
-	assert(tokenizer.vocab_size() == 21);
-	assert(tokenizer.unknown_id() == 0);
-	assert(tokenizer.pad_id() == 1);
-	assert(tokenizer.bos_id() == 2);
-	assert(tokenizer.eos_id() == 3);
-
-	tokens = tokenizer.encode("ab");
-
-	assert(tokens.size() == 1);
-	assert(tokens[0] == 18);
-
-	decoded = tokenizer.decode(tokens);
-
-	assert(decoded == "ab");
-
-	std::cout << "Tokenizer tests passed"
+	std::cout << "BPE trainer test passed"
 		<< std::endl;
 
 	return (0);

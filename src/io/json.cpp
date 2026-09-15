@@ -37,7 +37,8 @@ void	Json::save(
 		throw std::runtime_error(
 			"Could not create JSON file: " + path);
 
-	file << data.dump(4);
+	file << data.dump(4, ' ', false,
+		nlohmann::json::error_handler_t::replace);
 	file << std::endl;
 
 	file.close();

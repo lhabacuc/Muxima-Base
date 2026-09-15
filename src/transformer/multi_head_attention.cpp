@@ -1,192 +1,193 @@
 #include "multi_head_attention.h"
 
-#include "../core/math.h"
-
 #include <cmath>
 #include <stdexcept>
-#include <vector>
 
-static size_t	calculate_head_dim(
-	size_t embedding_dim,
+MultiHeadAttention::MultiHeadAttention(size_t embedding_dim,
 	size_t num_heads)
-{
-	if (num_heads == 0)
-		throw (std::invalid_argument(
-			"Number of heads cannot be zero"));
-
-	if (embedding_dim % num_heads != 0)
-		throw (std::invalid_argument(
-			"Embedding dimension must be divisible by heads"));
-
-	return (embedding_dim / num_heads);
-}
-
-static Tensor	extract_head(
-	const Tensor& tensor,
-	size_t head,
-	size_t head_dim)
-{
-	std::vector<size_t> shape;
-	size_t	sequence_length;
-	size_t	i;
-	size_t	j;
-
-	sequence_length = tensor.shape()[0];
-
-	shape.push_back(sequence_length);
-	shape.push_back(head_dim);
-
-	{
-		Tensor	result(shape);
-
-		i = 0;
-		while (i < sequence_length)
-		{
-			j = 0;
-			while (j < head_dim)
-			{
-				result.data()[i * head_dim + j]
-					= tensor.data()[
-						i * tensor.shape()[1]
-						+ head * head_dim + j];
-				j++;
-			}
-			i++;
-		}
-		return (result);
-	}
-}
-
-MultiHeadAttention::MultiHeadAttention(
-	size_t embedding_dim,
-	size_t num_heads)
-	: _embedding_dim(embedding_dim),
-	_num_heads(num_heads),
-	_head_dim(calculate_head_dim(
-		embedding_dim, num_heads)),
-	_query(embedding_dim, embedding_dim),
+	: _query(embedding_dim, embedding_dim),
 	_key(embedding_dim, embedding_dim),
 	_value(embedding_dim, embedding_dim),
-	_output(embedding_dim, embedding_dim)
+	_output(embedding_dim, embedding_dim),
+	_num_heads(num_heads),
+	_head_dim(0)
 {
+	if (embedding_dim == 0)
+		throw std::invalid_argument("embedding_dim must be greater than zero");
+	if (num_heads == 0)
+		throw std::invalid_argument("num_heads must be greater than zero");
+	if (embedding_dim % num_heads != 0)
+		throw std::invalid_argument(
+			"embedding_dim must be divisible by num_heads");
+
+	_head_dim = embedding_dim / num_heads;
 }
 
-Tensor	MultiHeadAttention::attention(
-	const Tensor& input,
-	size_t head)
+Tensor	MultiHeadAttention::create_head(const Tensor& tensor,
+	size_t head) const
 {
-	Tensor	q = extract_head(
-		_query.forward(input),
-		head,
-		_head_dim);
-	Tensor	k = extract_head(
-		_key.forward(input),
-		head,
-		_head_dim);
-	Tensor	v = extract_head(
-		_value.forward(input),
-		head,
-		_head_dim);
-	Tensor	scores = matmul(q, transpose(k));
+	const std::vector<size_t>& shape = tensor.shape();
+	std::vector<size_t> result_shape;
 
-	scores = scalar_multiply(
-		scores,
-		1.0f / std::sqrt(
-			static_cast<float>(_head_dim)));
+	if (shape.size() != 2)
+		throw std::invalid_argument("attention input must be 2D");
 
-	Tensor	weights = softmax(scores);
+	result_shape.push_back(shape[0]);
+	result_shape.push_back(_head_dim);
 
-	return (matmul(weights, v));
+	Tensor result(result_shape);
+
+	size_t start;
+	size_t row;
+	size_t column;
+
+	start = head * _head_dim;
+	row = 0;
+	while (row < shape[0])
+	{
+		column = 0;
+		while (column < _head_dim)
+		{
+			result.at(std::vector<size_t>{
+				row, column
+			}) = tensor.at(std::vector<size_t>{
+				row, start + column
+			});
+			column++;
+		}
+		row++;
+	}
+	return result;
 }
 
-Tensor	MultiHeadAttention::concatenate_heads(
-	const std::vector<Tensor>& heads)
+Tensor	MultiHeadAttention::create_causal_mask(
+	size_t sequence_length) const
 {
-	size_t	sequence_length;
-	size_t	head_dim;
-	size_t	num_heads;
-	size_t	i;
-	size_t	j;
-	size_t	k;
 	std::vector<size_t> shape;
 
-	num_heads = heads.size();
-	sequence_length = heads[0].shape()[0];
-	head_dim = heads[0].shape()[1];
-
 	shape.push_back(sequence_length);
-	shape.push_back(head_dim * num_heads);
+	shape.push_back(sequence_length);
 
+	Tensor mask(shape);
+
+	size_t row;
+	size_t column;
+
+	row = 0;
+	while (row < sequence_length)
 	{
-		Tensor	result(shape);
-
-		i = 0;
-		while (i < sequence_length)
+		column = 0;
+		while (column < sequence_length)
 		{
-			j = 0;
-			while (j < num_heads)
-			{
-				k = 0;
-				while (k < head_dim)
-				{
-					result.data()[
-						i * head_dim * num_heads
-						+ j * head_dim + k]
-						= heads[j].data()[
-							i * head_dim + k];
-					k++;
-				}
-				j++;
-			}
-			i++;
+			if (column <= row)
+				mask.at(std::vector<size_t>{row, column}) = 0.0f;
+			else
+				mask.at(std::vector<size_t>{row, column}) = -1e9f;
+			column++;
 		}
-		return (result);
+		row++;
 	}
+	return mask;
 }
 
-Tensor	MultiHeadAttention::forward(
-	const Tensor& input)
+Tensor	MultiHeadAttention::apply_mask(const Tensor& scores,
+	const Tensor& mask) const
 {
-	std::vector<Tensor> heads;
-	size_t	head;
+	return add(scores, mask);
+}
 
-	if (input.shape().size() != 2)
-		throw (std::invalid_argument(
-			"MultiHeadAttention expects 2D tensor"));
+Tensor	MultiHeadAttention::forward(const Tensor& input)
+{
+	const std::vector<size_t>& shape = input.shape();
 
-	if (input.shape()[1] != _embedding_dim)
-		throw (std::invalid_argument(
-			"Invalid embedding dimension"));
+	if (shape.size() != 2)
+		throw std::invalid_argument("attention input must be 2D");
+
+	Tensor query = _query.forward(input);
+	Tensor key = _key.forward(input);
+	Tensor value = _value.forward(input);
+	Tensor mask = create_causal_mask(shape[0]);
+
+	std::vector<size_t> output_shape;
+	output_shape.push_back(shape[0]);
+	output_shape.push_back(_num_heads * _head_dim);
+
+	Tensor combined(output_shape);
+
+	size_t head;
+	size_t row;
+	size_t column;
 
 	head = 0;
 	while (head < _num_heads)
 	{
-		heads.push_back(attention(input, head));
+		Tensor q_head = create_head(query, head);
+		Tensor k_head = create_head(key, head);
+		Tensor v_head = create_head(value, head);
+
+		Tensor k_transposed = transpose(k_head);
+		Tensor scores = matmul(q_head, k_transposed);
+
+		scores = scalar_multiply(
+			scores,
+			1.0f / std::sqrt(static_cast<float>(_head_dim)));
+
+		scores = add(scores, mask);
+
+		Tensor attention = softmax(scores);
+		Tensor context = matmul(attention, v_head);
+
+		row = 0;
+		while (row < shape[0])
+		{
+			column = 0;
+			while (column < _head_dim)
+			{
+				size_t output_column;
+
+				output_column = head * _head_dim + column;
+
+				combined.at(std::vector<size_t>{
+					row, output_column
+				}) = context.at(std::vector<size_t>{
+					row, column
+				});
+				column++;
+			}
+			row++;
+		}
 		head++;
 	}
 
-	Tensor	projected = concatenate_heads(heads);
-	Tensor	result = _output.forward(projected);
-
-	return (result);
+	return _output.forward(combined);
 }
 
 Linear&	MultiHeadAttention::query()
 {
-	return (_query);
+	return _query;
 }
 
 Linear&	MultiHeadAttention::key()
 {
-	return (_key);
+	return _key;
 }
 
 Linear&	MultiHeadAttention::value()
 {
-	return (_value);
+	return _value;
 }
 
 Linear&	MultiHeadAttention::output()
 {
-	return (_output);
+	return _output;
+}
+
+size_t	MultiHeadAttention::num_heads() const
+{
+	return _num_heads;
+}
+
+size_t	MultiHeadAttention::head_dim() const
+{
+	return _head_dim;
 }
