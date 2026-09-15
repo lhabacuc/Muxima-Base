@@ -46,14 +46,14 @@ Transformer::Transformer(
 
 Tensor	Transformer::forward(const Tensor& tokens)
 {
-	Tensor	x;
 	size_t	i;
 
+	(void)_embedding_dim;
 	if (tokens.shape().size() != 1)
 		throw (std::invalid_argument(
 			"Transformer expects 1D token tensor"));
 
-	x = _embedding.forward(tokens);
+	Tensor	x = _embedding.forward(tokens);
 	x = _positional.forward(x);
 
 	i = 0;

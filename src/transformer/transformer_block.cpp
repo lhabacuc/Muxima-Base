@@ -18,11 +18,6 @@ TransformerBlock::TransformerBlock(
 
 Tensor	TransformerBlock::forward(const Tensor& input)
 {
-	Tensor	normalized;
-	Tensor	attention_output;
-	Tensor	residual;
-	Tensor	ffn_output;
-
 	if (input.shape().size() != 2)
 		throw (std::invalid_argument(
 			"TransformerBlock expects 2D tensor"));
@@ -31,12 +26,12 @@ Tensor	TransformerBlock::forward(const Tensor& input)
 		throw (std::invalid_argument(
 			"Invalid embedding dimension"));
 
-	normalized = _norm1.forward(input);
-	attention_output = _attention.forward(normalized);
-	residual = add(input, attention_output);
+	Tensor	normalized = _norm1.forward(input);
+	Tensor	attention_output = _attention.forward(normalized);
+	Tensor	residual = add(input, attention_output);
 
 	normalized = _norm2.forward(residual);
-	ffn_output = _feed_forward.forward(normalized);
+	Tensor	ffn_output = _feed_forward.forward(normalized);
 
 	return (add(residual, ffn_output));
 }

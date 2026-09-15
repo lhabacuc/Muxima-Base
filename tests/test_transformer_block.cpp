@@ -12,7 +12,6 @@ int	main()
 
 	{
 		Tensor	input(shape);
-		Tensor	result;
 		TransformerBlock	block(4, 2, 16);
 
 		input.data()[0] = 1.0f;
@@ -20,7 +19,7 @@ int	main()
 		input.data()[2] = 3.0f;
 		input.data()[3] = 4.0f;
 
-		result = block.forward(input);
+		Tensor	result = block.forward(input);
 
 		if (result.shape()[0] != 3)
 			return (1);
