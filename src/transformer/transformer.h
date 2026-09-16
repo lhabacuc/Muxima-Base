@@ -5,6 +5,7 @@
 # include "../nn/embedding.h"
 # include "../nn/positional_encoding.h"
 # include "../nn/layer_norm.h"
+# include "../training/parameter_list.h"
 # include "transformer_block.h"
 
 # include <vector>
@@ -40,6 +41,8 @@ class Transformer
 		PositionalEncoding&	positional();
 		LayerNorm&			final_norm();
 		std::vector<TransformerBlock>&	blocks();
+
+		ParameterList	parameters();
 };
 
 #endif

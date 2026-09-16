@@ -16,7 +16,7 @@ int	main()
 	tokens.data()[1] = 5.0f;
 	tokens.data()[2] = 7.0f;
 
-	embedding.weights().data()[8] = 42.0f;
+	embedding.weights().value().data()[8] = 42.0f;
 
 	{
 		Tensor	result = embedding.forward(tokens);

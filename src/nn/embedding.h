@@ -1,12 +1,12 @@
 #ifndef EMBEDDING_H
 # define EMBEDDING_H
 
-# include "../core/tensor.h"
+# include "../core/variable.h"
 
 class Embedding
 {
 	private:
-		Tensor	_weights;
+		Variable	_weights;
 
 		static Tensor	create_weights(size_t vocab_size,
 						size_t embedding_dim);
@@ -16,7 +16,7 @@ class Embedding
 
 		Tensor	forward(const Tensor& tokens);
 
-		Tensor&	weights();
+		Variable&	weights();
 };
 
 #endif

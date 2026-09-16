@@ -1,13 +1,13 @@
 #ifndef LAYER_NORM_H
 # define LAYER_NORM_H
 
-# include "../core/tensor.h"
+# include "../core/variable.h"
 
 class LayerNorm
 {
 	private:
-		Tensor	_gamma;
-		Tensor	_beta;
+		Variable	_gamma;
+		Variable	_beta;
 		float	_eps;
 
 		static Tensor	create_parameter(size_t embedding_dim);
@@ -17,8 +17,8 @@ class LayerNorm
 
 		Tensor	forward(const Tensor& input);
 
-		Tensor&	gamma();
-		Tensor&	beta();
+		Variable&	gamma();
+		Variable&	beta();
 };
 
 #endif

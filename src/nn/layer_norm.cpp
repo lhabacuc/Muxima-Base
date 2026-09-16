@@ -14,8 +14,8 @@ Tensor	LayerNorm::create_parameter(size_t embedding_dim)
 }
 
 LayerNorm::LayerNorm(size_t embedding_dim, float eps)
-	: _gamma(create_parameter(embedding_dim)),
-	_beta(create_parameter(embedding_dim)),
+	: _gamma(create_parameter(embedding_dim), true),
+	_beta(create_parameter(embedding_dim), true),
 	_eps(eps)
 {
 	size_t	i;
@@ -23,8 +23,10 @@ LayerNorm::LayerNorm(size_t embedding_dim, float eps)
 	i = 0;
 	while (i < embedding_dim)
 	{
-		_gamma.data()[i] = 1.0f;
-		_beta.data()[i] = 0.0f;
+		_gamma.value().data()[i] = 1.0f;
+		_gamma.gradient().data()[i] = 0.0f;
+		_beta.value().data()[i] = 0.0f;
+		_beta.gradient().data()[i] = 0.0f;
 		i++;
 	}
 }
@@ -47,7 +49,7 @@ Tensor	LayerNorm::forward(const Tensor& input)
 	sequence_length = input.shape()[0];
 	embedding_dim = input.shape()[1];
 
-	if (embedding_dim != _gamma.shape()[1])
+	if (embedding_dim != _gamma.value().shape()[1])
 		throw (std::invalid_argument(
 			"Embedding dimensions do not match"));
 
@@ -81,7 +83,7 @@ Tensor	LayerNorm::forward(const Tensor& input)
 				= diff / std::sqrt(variance + _eps);
 			result.data()[i * embedding_dim + j]
 				= result.data()[i * embedding_dim + j]
-				* _gamma.data()[j] + _beta.data()[j];
+				* _gamma.value().data()[j] + _beta.value().data()[j];
 			j++;
 		}
 		i++;
@@ -89,12 +91,12 @@ Tensor	LayerNorm::forward(const Tensor& input)
 	return (result);
 }
 
-Tensor&	LayerNorm::gamma()
+Variable&	LayerNorm::gamma()
 {
 	return (_gamma);
 }
 
-Tensor&	LayerNorm::beta()
+Variable&	LayerNorm::beta()
 {
 	return (_beta);
 }
