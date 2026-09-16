@@ -60,6 +60,12 @@ Tensor	Linear::forward(const Tensor& input)
 		_bias.value()));
 }
 
+Variable*	Linear::forward(Variable& input, AutogradGraph& graph)
+{
+	Variable* hidden = graph.matmul(input, _weights);
+	return (graph.add(*hidden, _bias));
+}
+
 Variable&	Linear::weights()
 {
 	return (_weights);

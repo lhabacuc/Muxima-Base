@@ -9,6 +9,11 @@ Config	Config::load(
 
 	data = Json::load(path);
 
+	if (data.at("model").contains("name"))
+		config.model.name = data.at("model").at("name").get<std::string>();
+	else
+		config.model.name = "Muxima";
+
 	config.model.vocab_size =
 		data.at("model").at("vocab_size");
 

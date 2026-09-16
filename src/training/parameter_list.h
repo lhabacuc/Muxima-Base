@@ -17,6 +17,7 @@ class ParameterList
 		void	zero_grad(class Optimizer& optimizer);
 
 		size_t	size() const;
+		size_t	total_parameters() const;
 };
 
 #endif

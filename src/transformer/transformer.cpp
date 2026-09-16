@@ -66,6 +66,14 @@ Tensor	Transformer::forward(const Tensor& tokens)
 	return (_final_norm.forward(x));
 }
 
+Variable*	Transformer::forward(Variable& tokens, AutogradGraph& graph)
+{
+	(void)graph;
+	Tensor out = forward(tokens.value());
+	Variable* var = new Variable(out, true);
+	return (var);
+}
+
 Embedding&	Transformer::embedding()
 {
 	return (_embedding);

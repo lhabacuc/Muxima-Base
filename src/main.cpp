@@ -1,13 +1,18 @@
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <dirent.h>
+#include <sys/stat.h>
 
 #include "io/config.h"
 #include "io/checkpoint.h"
 #include "tokenizer/tokenizer.h"
 #include "tokenizer/bpe_trainer.h"
 #include "training/dataset.h"
+#include "training/trainer.h"
 #include "transformer/transformer.h"
 #include "nn/lm_head.h"
 #include "training/cross_entropy.h"
@@ -22,6 +27,7 @@ static void	print_help(const std::string& prog)
 		<< "  " << prog << " train     --config <path> --corpus <path> [--epochs N]\n"
 		<< "  " << prog << " infer     --prompt <text> [--config <path>] [--checkpoint <path>]\n"
 		<< "  " << prog << " chat      [--config <path>] [--checkpoint <path>]\n"
+		<< "  " << prog << " models list [--config <path>] [--dir <path>]\n"
 		<< "  " << prog << " compact   --input <path> --output <path>\n"
 		<< "  " << prog << " tokenizer train --corpus <path> --output <path> --vocab-size N\n"
 		<< "  " << prog << " tokenizer encode --text <text> [--tokenizer <path>]\n"
@@ -31,6 +37,7 @@ static void	print_help(const std::string& prog)
 		<< "  train        Treina o Transformer com Dataset + CrossEntropy + SGD\n"
 		<< "  infer        Gera tokens a partir de um prompt (greedy)\n"
 		<< "  chat         Modo interativo (inferência em loop)\n"
+		<< "  models       Gerenciamento de modelos (models list)\n"
 		<< "  compact      Compacta checkpoint JSON -> binário (stub)\n"
 		<< "  tokenizer    Operações do tokenizer BPE\n"
 		<< std::endl;
@@ -78,10 +85,10 @@ static std::string	generate_visible_response(
 				return ("Eu sou o Muxima, inteligencia artificial de Angola, criado para ajudar.");
 			if (prompt.find("angola") != std::string::npos)
 				return ("Angola fica em Africa, Luanda e a capital. Muxima significa coracao.");
-			return ("Muxima aqui! Aprendi com 695 frases sobre Angola. Pergunta algo sobre angola, luanda ou muxima.");
+			return ("Muxima aqui! Aprendi com 1093 frases sobre Angola. Pergunta algo sobre angola, luanda ou muxima.");
 		}
 		TrainingSample best = dataset.get_sample(best_idx);
-		// Usa target como resposta visível (next-token)
+		// Usa target como resposta visivel (next-token)
 		std::string decoded = tokenizer.decode(best.target);
 		if (decoded.size() > 80)
 			decoded = decoded.substr(0, 80);
@@ -89,7 +96,7 @@ static std::string	generate_visible_response(
 	}
 	catch (...)
 	{
-		return ("Ola! Sou o Muxima. Dataset com 695 frases carregado.");
+		return ("Ola! Sou o Muxima. Dataset com 1093 frases carregado.");
 	}
 }
 
@@ -141,18 +148,8 @@ static int	cmd_train(int argc, char* argv[])
 		std::cout << "[train] optimizer lr=" << optimizer.learning_rate()
 			<< " params=" << params.size() << std::endl;
 
-		for (size_t e = 0; e < epochs; e++)
-		{
-			std::cout << "[train] epoch " << (e + 1) << "/" << epochs << std::endl;
-			size_t steps = std::min<size_t>(dataset.size(), 2);
-			for (size_t s = 0; s < steps; s++)
-			{
-				TrainingSample sample = dataset.get_sample(s);
-				// Stub forward/backward - real trainer would use AutogradGraph
-				(void)sample;
-				std::cout << "  step " << s << " sample input[0]=" << sample.input[0] << std::endl;
-			}
-		}
+		Trainer trainer(model, dataset, optimizer, params);
+		trainer.train(epochs);
 
 		Checkpoint ckpt;
 		ckpt.model_name = "Muxima-Base";
@@ -353,6 +350,123 @@ static int	cmd_tokenizer(int argc, char* argv[])
 	return (0);
 }
 
+static std::string	format_param_count(size_t count)
+{
+	std::ostringstream oss;
+	if (count >= 1000000000)
+		oss << std::fixed << std::setprecision(2) << (double)count / 1e9 << "B";
+	else if (count >= 1000000)
+		oss << std::fixed << std::setprecision(2) << (double)count / 1e6 << "M";
+	else if (count >= 1000)
+		oss << std::fixed << std::setprecision(2) << (double)count / 1e3 << "K";
+	else
+		oss << count;
+	return (oss.str());
+}
+
+static void	display_model_config(const std::string& path)
+{
+	try
+	{
+		Config cfg = Config::load(path);
+		Transformer m(
+			cfg.model.vocab_size,
+			cfg.model.max_length,
+			cfg.model.embedding_dim,
+			cfg.model.num_layers,
+			cfg.model.num_heads,
+			cfg.model.hidden_dim);
+		ParameterList params = m.parameters();
+		size_t total = params.total_parameters();
+
+		std::cout << "Model: " << cfg.model.name << "\n"
+			<< "  Path:           " << path << "\n"
+			<< "  Parameters:     " << total << " (" << format_param_count(total) << ")\n"
+			<< "  Tensors:        " << params.size() << "\n"
+			<< "  Vocab Size:     " << cfg.model.vocab_size << "\n"
+			<< "  Max Length:     " << cfg.model.max_length << "\n"
+			<< "  Embedding Dim:  " << cfg.model.embedding_dim << "\n"
+			<< "  Layers:         " << cfg.model.num_layers << "\n"
+			<< "  Attention Heads:" << cfg.model.num_heads << "\n"
+			<< "  Hidden Dim:     " << cfg.model.hidden_dim << "\n"
+			<< std::endl;
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "Error loading " << path << ": " << e.what() << std::endl;
+	}
+}
+
+static int	cmd_models(int argc, char* argv[])
+{
+	if (argc < 3)
+	{
+		std::cout << "Usage:\n"
+			<< "  " << argv[0] << " models list [--config <path>] [--dir <path>]\n";
+		return (1);
+	}
+
+	std::string sub = argv[2];
+	if (sub != "list")
+	{
+		std::cerr << "unknown models subcommand: " << sub << std::endl;
+		std::cerr << "Available subcommands: list" << std::endl;
+		return (1);
+	}
+
+	std::string single_config = "";
+	std::string dir_path = "config";
+
+	for (int i = 3; i < argc; i++)
+	{
+		std::string arg = argv[i];
+		if (arg == "--config" && i + 1 < argc)
+			single_config = argv[++i];
+		else if (arg == "--dir" && i + 1 < argc)
+			dir_path = argv[++i];
+	}
+
+	std::cout << "========================================" << std::endl;
+	std::cout << "         Muxima Models List             " << std::endl;
+	std::cout << "========================================" << std::endl;
+
+	if (!single_config.empty())
+	{
+		display_model_config(single_config);
+		return (0);
+	}
+
+	DIR* dir = opendir(dir_path.c_str());
+	if (!dir)
+	{
+		// Fallback to default config/model.json if directory open fails
+		display_model_config("config/model.json");
+		return (0);
+	}
+
+	struct dirent* entry;
+	size_t found = 0;
+	while ((entry = readdir(dir)) != NULL)
+	{
+		std::string name = entry->d_name;
+		if (name.size() >= 5 && name.substr(name.size() - 5) == ".json"
+			&& name != "tokenizer.json")
+		{
+			std::string file_path = dir_path + "/" + name;
+			display_model_config(file_path);
+			found++;
+		}
+	}
+	closedir(dir);
+
+	if (found == 0)
+	{
+		display_model_config("config/model.json");
+	}
+
+	return (0);
+}
+
 int	main(int argc, char* argv[])
 {
 	if (argc < 2)
@@ -371,6 +485,8 @@ int	main(int argc, char* argv[])
 		return (cmd_infer(argc, argv));
 	else if (cmd == "chat")
 		return (cmd_chat(argc, argv));
+	else if (cmd == "models")
+		return (cmd_models(argc, argv));
 	else if (cmd == "compact")
 		return (cmd_compact(argc, argv));
 	else if (cmd == "tokenizer")

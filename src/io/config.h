@@ -6,6 +6,7 @@
 
 struct ModelConfig
 {
+	std::string	name;
 	size_t	vocab_size;
 	size_t	max_length;
 	size_t	embedding_dim;

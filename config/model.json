@@ -1,12 +1,12 @@
 {
     "model": {
-        "name": "Muxima-Base",
+        "name": "Muxima-Base-100M",
         "vocab_size": 32000,
         "max_length": 1024,
-        "embedding_dim": 512,
-        "num_layers": 8,
-        "num_heads": 8,
-        "hidden_dim": 2048
+        "embedding_dim": 768,
+        "num_layers": 12,
+        "num_heads": 12,
+        "hidden_dim": 2560
     },
     "training": {
         "learning_rate": 0.0003,

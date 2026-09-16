@@ -34,3 +34,17 @@ size_t	ParameterList::size() const
 {
 	return (_parameters.size());
 }
+
+size_t	ParameterList::total_parameters() const
+{
+	size_t count = 0;
+	size_t i = 0;
+
+	while (i < _parameters.size())
+	{
+		if (_parameters[i])
+			count += _parameters[i]->value().size();
+		i++;
+	}
+	return (count);
+}

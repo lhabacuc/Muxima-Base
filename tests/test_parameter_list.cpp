@@ -51,6 +51,7 @@ int	main()
 	assert(bias.gradient().data()[0] == 0.0f);
 
 	assert(parameters.size() == 2);
+	assert(parameters.total_parameters() == 2);
 
 	std::cout << "Parameter list tests passed"
 		<< std::endl;

@@ -1,6 +1,7 @@
 #ifndef LINEAR_H
 # define LINEAR_H
 
+# include "../core/autograd_graph.h"
 # include "../core/variable.h"
 
 class Linear
@@ -21,7 +22,9 @@ class Linear
 			size_t input_size,
 			size_t output_size);
 
-		Tensor	forward(const Tensor& input);
+			Tensor	forward(const Tensor& input);
+
+		Variable*	forward(Variable& input, AutogradGraph& graph);
 
 		Variable&	weights();
 		Variable&	bias();

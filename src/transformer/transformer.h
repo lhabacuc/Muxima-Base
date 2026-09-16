@@ -2,6 +2,8 @@
 # define TRANSFORMER_H
 
 # include "../core/tensor.h"
+# include "../core/variable.h"
+# include "../core/autograd_graph.h"
 # include "../nn/embedding.h"
 # include "../nn/positional_encoding.h"
 # include "../nn/layer_norm.h"
@@ -36,6 +38,7 @@ class Transformer
 			size_t hidden_dim);
 
 		Tensor	forward(const Tensor& tokens);
+		Variable*	forward(Variable& tokens, AutogradGraph& graph);
 
 		Embedding&			embedding();
 		PositionalEncoding&	positional();
