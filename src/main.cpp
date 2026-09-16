@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstdlib>
 
 #include "io/config.h"
 #include "io/checkpoint.h"
@@ -106,6 +107,7 @@ static int	cmd_train(int argc, char* argv[])
 		ckpt.step = epochs;
 		ckpt.epoch = epochs;
 		ckpt.loss = 0.5f;
+		std::system("mkdir -p checkpoints");
 		CheckpointIO::save("checkpoints/last.json", ckpt);
 		std::cout << "[train] checkpoint saved to checkpoints/last.json" << std::endl;
 	}
